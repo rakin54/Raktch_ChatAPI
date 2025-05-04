@@ -1,8 +1,9 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework import status
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.exceptions import PermissionDenied
 from .serializers import RegisterSerializer, PostSerializer
 from .models import Post
@@ -24,8 +25,10 @@ class PostView(APIView):
 
     def get(self, request):
         posts = Post.objects.all().order_by('-id')
-        serializer = PostSerializer(posts, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        paginator = PageNumberPagination()
+        paginated_posts = paginator.paginate_queryset(posts, request)
+        serializer = PostSerializer(paginated_posts, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     def post(self, request):
         serializer = PostSerializer(data=request.data)
