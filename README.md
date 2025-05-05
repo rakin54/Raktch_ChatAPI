@@ -248,4 +248,6 @@ View a Post: ```GET http://127.0.0.1:8000/api/posts/<post_id>```
 - Invalid post id - **404 Not Found**
 
 
+I spent 8 hours and 18 minutes on this project.
+
 *For any feedback or advice, feel free to reach out through creating issues or email ^_^*
