@@ -13,6 +13,7 @@ NAME = # database_name_you_want_to_connect
 USER= # username
 HOST= # Where_the_db_located
 ```
+***Note:*** If you are running the application in docker environment, please set the `HOST` to `db_blog`, let's say, `HOST= db_blog`.
 
 Now you have two ways to run the application- 
 ### With docker-compose -

@@ -23,4 +23,4 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - ${HOST}
+      - db_blog
