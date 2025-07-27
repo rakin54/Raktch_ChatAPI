@@ -1,4 +1,6 @@
 # Chat API app
+This is my minimal chatbot application (API based) built with Django REST Framework (DRF). I integrated a very lightweight NLP model, distilgpt2, to generate responses to users' messages.
+
 Project setup & Installing Dependencies.
 ---
 Clone this repo by copying this command:
