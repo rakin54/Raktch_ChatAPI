@@ -1,70 +1,35 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework import status
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from rest_framework.exceptions import PermissionDenied
-from .serializers import RegisterSerializer, PostSerializer
-from .models import Post
+from .serializers import PostSerializer
+# from .models import Post
 
 # Create your views here.
 
-class RegisterView(APIView):
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+# from .model_loader import generate_reply
+
+from transformers import AutoModelForCausalLM, AutoTokenizer
+import torch
+
+tokenizer = AutoTokenizer.from_pretrained("distilgpt2")
+model = AutoModelForCausalLM.from_pretrained("distilgpt2")
+
+
+def generate_reply(prompt):
+    inputs = tokenizer.encode(prompt, return_tensors="pt")
+    outputs = model.generate(inputs, max_length=50, do_sample=True)
+    return tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+class ChatView(APIView):
     def post(self, request):
-        serializer = RegisterSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'message': 'User registered successfully!'}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        message = request.data.get("message")
+        if not message:
+            return Response({"error": "No message provided"}, status=400)
+        reply = generate_reply(message)
+        return Response({"reply": reply}, status=200)
 
-
-
-class PostView(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]
-
-    def get(self, request):
-        posts = Post.objects.all().order_by('-id')
-        paginator = PageNumberPagination()
-        paginated_posts = paginator.paginate_queryset(posts, request)
-        serializer = PostSerializer(paginated_posts, many=True)
-        return paginator.get_paginated_response(serializer.data)
-
-    def post(self, request):
-        serializer = PostSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(author=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-
-
-class PostDetailView(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly] 
-
-    def get_object(self, id):
-        return get_object_or_404(Post, id=id)
-    
-    def get(self, request, id):
-        post = self.get_object(id)
-        serializer = PostSerializer(post)
-        return Response(serializer.data)
-    
-    def put(self, request, id):
-        post = self.get_object(id)
-        if request.user != post.author:
-            raise PermissionDenied("You do not have permission to edit this post.")
-        serializer = PostSerializer(post, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, id):
-        post = self.get_object(id)
-        if request.user != post.author:
-            raise PermissionDenied("You do not have permission to delete this post.")
-        post.delete()
-        return Response({"message": "Post deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
-
-    
